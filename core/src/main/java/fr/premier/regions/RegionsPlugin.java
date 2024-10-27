@@ -3,8 +3,12 @@ package fr.premier.regions;
 import fr.premier.regions.data.PlayerDataManager;
 import fr.premier.regions.database.RegionsDatabase;
 import fr.premier.regions.flag.FlagManager;
+import fr.premier.regions.region.RegionListener;
 import fr.premier.regions.region.RegionManager;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.List;
 
 public class RegionsPlugin extends JavaPlugin {
 
@@ -27,12 +31,18 @@ public class RegionsPlugin extends JavaPlugin {
         this.regionManager = new RegionManager(this);
         this.database = new RegionsDatabase(this);
         this.playerDataManager = new PlayerDataManager(this);
+
+        List.of(new RegionListener()).forEach(this::registerEvent);
     }
 
     @Override
     public void onDisable() {
         this.playerDataManager.disable();
         this.database.disable();
+    }
+
+    private void registerEvent(Listener listener) {
+        this.getServer().getPluginManager().registerEvents(listener, this);
     }
 
     public PlayerDataManager getPlayerDataManager() {

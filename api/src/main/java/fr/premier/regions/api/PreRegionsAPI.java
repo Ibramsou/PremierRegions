@@ -2,10 +2,13 @@ package fr.premier.regions.api;
 
 import fr.premier.regions.api.flag.FlagState;
 import fr.premier.regions.api.flag.PreFlag;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.UUID;
 
 @ParametersAreNonnullByDefault
 public interface PreRegionsAPI {
@@ -24,4 +27,12 @@ public interface PreRegionsAPI {
     @Nullable PreFlag getDefaultFlag(String name);
 
     @Nullable PreFlag getFlag(Plugin plugin, String name);
+
+    boolean matchFlag(Player player, PreFlag flag);
+
+    boolean matchFlag(Player player, PreFlag flag, Location location);
+
+    boolean matchFlag(UUID uuid, PreFlag flag, Location location);
+
+    boolean matchFlag(PreFlag flag, Location location);
 }

@@ -11,6 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Queue;
 import java.util.UUID;
 
@@ -78,9 +79,9 @@ public class RegionsDatabase extends SqlDatabase {
                     final Location max = new Location(world, maxX, maxY, maxZ);
                     final BinaryFlags binaryFlags = new BinaryFlags();
                     binaryFlags.loadValue(flagsBinary);
-                    final Region region = new Region(uuid, name, min, max, binaryFlags);
+                    final Region region = new Region(uuid, name, min, max, binaryFlags, new ArrayList<>());
                     int hashcode = this.plugin.getRegionManager().hashRegion(region);
-                    this.plugin.getRegionManager().getRegions().put(hashcode, region);
+                    this.plugin.getRegionManager().loadRegion(region);
                 }
             }
         });
