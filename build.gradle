@@ -35,5 +35,6 @@ subprojects { p ->
         compileOnly 'com.zaxxer:HikariCP:5.0.1'
         implementation 'com.github.stefvanschie.inventoryframework:IF:0.10.13'
         compileOnly 'net.kyori:adventure-platform-bukkit:4.3.3'
+        compileOnly 'org.mariadb.jdbc:mariadb-java-client:3.3.3'
     }
 }
