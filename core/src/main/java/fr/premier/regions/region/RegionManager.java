@@ -1,7 +1,9 @@
 package fr.premier.regions.region;
 
 import fr.premier.regions.RegionsPlugin;
+import fr.premier.regions.api.flag.FlagState;
 import fr.premier.regions.binary.impl.BinaryFlags;
+import fr.premier.regions.flag.Flag;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -21,6 +23,25 @@ public class RegionManager {
         this.plugin = plugin;
     }
 
+    public void setFlagState(Region region, Flag flag, FlagState state) {
+        region.binaryFlags().getUpdateValue(map -> {
+            if (flag.defaultState() == state) {
+                map.remove(flag);
+            } else {
+                map.put(flag, state);
+            }
+        });
+    }
+
+    public FlagState getFlagState(Region region, Flag flag) {
+        final FlagState currentState = region.binaryFlags().getValue().get(flag);
+        if (currentState == null) {
+            return flag.defaultState();
+        }
+
+        return currentState;
+    }
+
     public int hashRegion(Region region) {
         return hashRegion(region.minLocation().getWorld(), region.name());
     }
@@ -31,6 +52,10 @@ public class RegionManager {
 
     public Region getRegion(World world, String name) {
         return regions.get(hashRegion(world, name));
+    }
+
+    public Region getRegion(int hashcode) {
+        return regions.get(hashcode);
     }
 
     public boolean containsRegion(final World world, final String regionName) {

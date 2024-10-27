@@ -1,5 +1,6 @@
 package fr.premier.regions;
 
+import fr.premier.regions.data.PlayerDataManager;
 import fr.premier.regions.database.RegionsDatabase;
 import fr.premier.regions.flag.FlagManager;
 import fr.premier.regions.region.RegionManager;
@@ -16,6 +17,7 @@ public class RegionsPlugin extends JavaPlugin {
     private RegionManager regionManager;
     private FlagManager flagManager;
     private RegionsDatabase database;
+    private PlayerDataManager playerDataManager;
 
     @Override
     public void onEnable() {
@@ -24,6 +26,17 @@ public class RegionsPlugin extends JavaPlugin {
         this.flagManager = new FlagManager();
         this.regionManager = new RegionManager(this);
         this.database = new RegionsDatabase(this);
+        this.playerDataManager = new PlayerDataManager(this);
+    }
+
+    @Override
+    public void onDisable() {
+        this.playerDataManager.disable();
+        this.database.disable();
+    }
+
+    public PlayerDataManager getPlayerDataManager() {
+        return playerDataManager;
     }
 
     public FlagManager getFlagManager() {

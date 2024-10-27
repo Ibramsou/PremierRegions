@@ -2,6 +2,8 @@ package fr.premier.regions.database;
 
 import fr.premier.regions.RegionsPlugin;
 import fr.premier.regions.binary.impl.BinaryFlags;
+import fr.premier.regions.binary.impl.BinaryWhitelist;
+import fr.premier.regions.data.PlayerData;
 import fr.premier.regions.region.Region;
 import fr.premier.regions.sql.SqlDatabase;
 import org.bukkit.Bukkit;
@@ -9,6 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 
 import java.sql.ResultSet;
+import java.util.Queue;
 import java.util.UUID;
 
 public class RegionsDatabase extends SqlDatabase {
@@ -27,7 +30,7 @@ public class RegionsDatabase extends SqlDatabase {
     private static final String CREATE_PLAYERS_TABLE_STATEMENT = "CREATE TABLE IF NOT EXISTS players (" +
             "uuid VARCHAR(36) NOT NULL UNIQUE PRIMARY KEY, " +
             "whitelisted_regions VARBINARY(10000))";
-    private static final String LOAD_USER_STATEMENT = "SELECT * FROM players WHERE uuid = ?";
+    private static final String LOAD_USER_STATEMENT = "SELECT whitelisted_regions FROM players WHERE uuid = ?";
     private static final String SAVE_USER_STATEMENT = "INSERT INTO players (uuid, whitelisted_regions) VALUES (?, ?) " +
             "ON DUPLICATE KEY UPDATE whitelisted_regions = ?";
     private static final String LOAD_REGIONS_STATEMENT = "SELECT * FROM regions";
@@ -42,6 +45,11 @@ public class RegionsDatabase extends SqlDatabase {
         this.plugin = plugin;
         this.loadTables();
         this.loadRegions();
+        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::saveUsers, 20L * 60L, 20L * 60L);
+    }
+
+    public void disable() {
+        this.saveUsers();
     }
 
     private void loadTables() {
@@ -98,6 +106,36 @@ public class RegionsDatabase extends SqlDatabase {
         this.prepareClosingStatement(INSERT_REGION_STATEMENT, statement -> {
             statement.setString(1, region.uuid().toString());
             statement.executeUpdate();
+        });
+    }
+
+    public PlayerData loadUser(UUID uuid) {
+        return this.resultPreparedStatement(LOAD_USER_STATEMENT, statement -> {
+            statement.setString(1, uuid.toString());
+            final PlayerData playerData = new PlayerData(uuid, new BinaryWhitelist());
+            try (ResultSet resultSet = statement.executeQuery(LOAD_USER_STATEMENT)) {
+                if (resultSet.next()) {
+                    byte[] whitelisted_regions = resultSet.getBytes("whitelisted_regions");
+                    playerData.getBinaryWhitelistedRegions().loadValue(whitelisted_regions);
+                }
+            }
+
+            return playerData;
+        });
+    }
+
+    public void saveUsers() {
+        final Queue<PlayerData> queue = this.plugin.getPlayerDataManager().getSaveQueue();
+        if (queue.isEmpty()) return;
+        this.prepareClosingStatement(SAVE_USER_STATEMENT, statement -> {
+            PlayerData playerData;
+            while ((playerData = queue.poll()) != null) {
+                statement.setString(1, playerData.toString());
+                statement.setBytes(2, playerData.getBinaryWhitelistedRegions().asBinary());
+                statement.addBatch();
+            }
+
+            statement.executeBatch();
         });
     }
 }
