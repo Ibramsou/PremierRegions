@@ -1,5 +1,6 @@
 package fr.premier.regions;
 
+import fr.premier.regions.data.PlayerDataListener;
 import fr.premier.regions.data.PlayerDataManager;
 import fr.premier.regions.database.RegionsDatabase;
 import fr.premier.regions.flag.FlagManager;
@@ -32,7 +33,7 @@ public class RegionsPlugin extends JavaPlugin {
         this.database = new RegionsDatabase(this);
         this.playerDataManager = new PlayerDataManager(this);
 
-        List.of(new RegionListener()).forEach(this::registerEvent);
+        List.of(new RegionListener(), new PlayerDataListener(this)).forEach(this::registerEvent);
     }
 
     @Override
