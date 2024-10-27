@@ -1,6 +1,7 @@
 package fr.premier.regions.region;
 
 import fr.premier.regions.RegionsPlugin;
+import fr.premier.regions.binary.impl.BinaryFlags;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -42,7 +43,7 @@ public class RegionManager {
         }
 
         final CompletableFuture<Region> future = new CompletableFuture<>();
-        final Region region = new Region(UUID.randomUUID(), name, min, max);
+        final Region region = new Region(UUID.randomUUID(), name, min, max, new BinaryFlags());
         Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
             this.plugin.getDatabase().insertRegion(region);
             Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> future.complete(region));

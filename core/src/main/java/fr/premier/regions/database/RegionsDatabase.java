@@ -1,6 +1,7 @@
 package fr.premier.regions.database;
 
 import fr.premier.regions.RegionsPlugin;
+import fr.premier.regions.binary.impl.BinaryFlags;
 import fr.premier.regions.region.Region;
 import fr.premier.regions.sql.SqlDatabase;
 import org.bukkit.Bukkit;
@@ -65,10 +66,11 @@ public class RegionsDatabase extends SqlDatabase {
                     final int maxY = resultSet.getInt("max_y");
                     final int maxZ = resultSet.getInt("max_z");
                     final byte[] flagsBinary = resultSet.getBytes("flags");
-                    // TODO: LOAD FLAGS
                     final Location min = new Location(world, minX, minY, minZ);
                     final Location max = new Location(world, maxX, maxY, maxZ);
-                    final Region region = new Region(uuid, name, min, max);
+                    final BinaryFlags binaryFlags = new BinaryFlags();
+                    binaryFlags.loadValue(flagsBinary);
+                    final Region region = new Region(uuid, name, min, max, binaryFlags);
                     int hashcode = this.plugin.getRegionManager().hashRegion(region);
                     this.plugin.getRegionManager().getRegions().put(hashcode, region);
                 }
@@ -87,7 +89,7 @@ public class RegionsDatabase extends SqlDatabase {
             statement.setInt(7, region.maxLocation().getBlockX());
             statement.setInt(8, region.maxLocation().getBlockY());
             statement.setInt(9, region.maxLocation().getBlockZ());
-            // TODO: set flags
+            statement.setBytes(10, region.binaryFlags().asBinary());
             statement.executeUpdate();
         });
     }

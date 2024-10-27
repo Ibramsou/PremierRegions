@@ -7,12 +7,20 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class RegionsPlugin extends JavaPlugin {
 
+    private static RegionsPlugin instance;
+
+    public static RegionsPlugin getInstance() {
+        return instance;
+    }
+
     private RegionManager regionManager;
     private FlagManager flagManager;
     private RegionsDatabase database;
 
     @Override
     public void onEnable() {
+        instance = this;
+
         this.flagManager = new FlagManager();
         this.regionManager = new RegionManager(this);
         this.database = new RegionsDatabase(this);
