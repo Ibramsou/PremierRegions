@@ -1,0 +1,47 @@
+apply plugin: 'maven-publish'
+
+def archiveName = 'region-api'
+def apiVersion = '1.0.0'
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+}
+
+jar {
+    setArchiveBaseName(archiveName)
+    setArchiveVersion(apiVersion)
+}
+
+javadocJar {
+    setArchiveBaseName(archiveName)
+    setArchiveVersion(apiVersion)
+}
+
+sourcesJar {
+    setArchiveBaseName(archiveName)
+    setArchiveVersion(apiVersion)
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/Ibramsou/PremierRegions")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.token") ?: System.getenv("TOKEN")
+            }
+        }
+    }
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+
+                version = apiVersion
+            }
+        }
+    }
+}

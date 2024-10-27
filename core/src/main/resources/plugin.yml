@@ -1,0 +1,7 @@
+name: PremierRegions
+author: Bramsou
+version: ${version}
+main: fr.premier.regions.RegionsPlugin
+api-version: 1.20
+libraries:
+  - com.zaxxer:HikariCP:5.0.1

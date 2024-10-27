@@ -1,0 +1,39 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+}
+
+allprojects {
+    group = 'fr.premier.regions'
+    version = '1.0.0'
+}
+
+subprojects { p ->
+    apply plugin: 'java'
+
+    compileJava.options.encoding = 'UTF-8'
+
+    defaultTasks 'build'
+
+    java {
+        toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+    }
+
+    repositories {
+        mavenCentral()
+        maven { url = 'https://repo.bg-software.com/repository/api/' }
+        maven { url uri("https://repo.papermc.io/repository/maven-public/") }
+    }
+
+    dependencies {
+        compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
+        compileOnly 'com.zaxxer:HikariCP:5.0.1'
+        implementation 'com.github.stefvanschie.inventoryframework:IF:0.10.13'
+        compileOnly 'net.kyori:adventure-platform-bukkit:4.3.3'
+    }
+}

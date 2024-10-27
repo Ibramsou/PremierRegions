@@ -1,0 +1,35 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '7.1.1'
+}
+
+def coreVersion = '1.0.0'
+
+
+dependencies {
+    implementation project(':api')
+}
+
+shadowJar {
+    setArchiveBaseName(getRootProject().name)
+    setArchiveVersion(coreVersion)
+    setArchiveClassifier('')
+    destinationDirectory.set(file("../out"))
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+tasks.register('devJar', Copy) {
+    from layout.projectDirectory.dir('../out')
+    include '*.jar'
+    into file('../run/plugins')
+}
+
+tasks.named('build').get().dependsOn(shadowJar)
+tasks.named('devJar').get().dependsOn(shadowJar)

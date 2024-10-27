@@ -1,0 +1,4 @@
+rootProject.name = 'PremierRegions'
+include 'api'
+include 'core'
+
