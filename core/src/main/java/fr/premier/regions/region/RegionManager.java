@@ -59,11 +59,13 @@ public class RegionManager {
 
     public void setFlagState(Region region, Flag flag, FlagState state) {
         region.binaryFlags().getUpdateValue(map -> {
+            if (map.get(flag) == state) return;
             if (flag.defaultState() == state) {
                 map.remove(flag);
             } else {
                 map.put(flag, state);
             }
+            Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> this.plugin.getDatabase().updateRegionFlag(region));
         });
     }
 
@@ -97,10 +99,6 @@ public class RegionManager {
     }
 
     public CompletableFuture<Region> addRegion(String name, Location min, Location max) {
-        if (this.regions.containsKey(hashRegion(min.getWorld(),name))) {
-            return null;
-        }
-
         final CompletableFuture<Region> future = new CompletableFuture<>();
         final Region region = new Region(UUID.randomUUID(), name, min, max, new BinaryFlags(), new ArrayList<>());
         Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {

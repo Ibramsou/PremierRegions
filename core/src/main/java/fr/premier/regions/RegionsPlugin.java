@@ -6,6 +6,8 @@ import fr.premier.regions.database.RegionsDatabase;
 import fr.premier.regions.flag.FlagManager;
 import fr.premier.regions.region.RegionListener;
 import fr.premier.regions.region.RegionManager;
+import fr.premier.regions.wand.WandListener;
+import fr.premier.regions.wand.WandManager;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -23,6 +25,7 @@ public class RegionsPlugin extends JavaPlugin {
     private FlagManager flagManager;
     private RegionsDatabase database;
     private PlayerDataManager playerDataManager;
+    private WandManager wandManager;
 
     @Override
     public void onEnable() {
@@ -32,8 +35,9 @@ public class RegionsPlugin extends JavaPlugin {
         this.regionManager = new RegionManager(this);
         this.database = new RegionsDatabase(this);
         this.playerDataManager = new PlayerDataManager(this);
+        this.wandManager = new WandManager(this);
 
-        List.of(new RegionListener(), new PlayerDataListener(this)).forEach(this::registerEvent);
+        List.of(new RegionListener(), new PlayerDataListener(this), new WandListener(this)).forEach(this::registerEvent);
     }
 
     @Override
@@ -44,6 +48,10 @@ public class RegionsPlugin extends JavaPlugin {
 
     private void registerEvent(Listener listener) {
         this.getServer().getPluginManager().registerEvents(listener, this);
+    }
+
+    public WandManager getWandManager() {
+        return wandManager;
     }
 
     public PlayerDataManager getPlayerDataManager() {

@@ -37,7 +37,7 @@ public class RegionsDatabase extends SqlDatabase {
     private static final String LOAD_REGIONS_STATEMENT = "SELECT * FROM regions";
     private static final String INSERT_REGION_STATEMENT = "INSERT INTO regions (name, min_x, min_y, min_z, max_x, max_y, max_z, flags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String DELETE_REGION_STATEMENT = "DELETE FROM regions WHERE name = ?";
-    private static final String UPDATE_REGION_FLAGS = "UPDATE regions SET flags = ? WHERE name = ?";
+    private static final String UPDATE_REGION_FLAGS_STATEMENT = "UPDATE regions SET flags = ? WHERE name = ?";
 
     private final RegionsPlugin plugin;
 
@@ -80,7 +80,6 @@ public class RegionsDatabase extends SqlDatabase {
                     final BinaryFlags binaryFlags = new BinaryFlags();
                     binaryFlags.loadValue(flagsBinary);
                     final Region region = new Region(uuid, name, min, max, binaryFlags, new ArrayList<>());
-                    int hashcode = this.plugin.getRegionManager().hashRegion(region);
                     this.plugin.getRegionManager().loadRegion(region);
                 }
             }
@@ -104,7 +103,7 @@ public class RegionsDatabase extends SqlDatabase {
     }
 
     public void deleteRegion(Region region) {
-        this.prepareClosingStatement(INSERT_REGION_STATEMENT, statement -> {
+        this.prepareClosingStatement(DELETE_REGION_STATEMENT, statement -> {
             statement.setString(1, region.uuid().toString());
             statement.executeUpdate();
         });
@@ -137,6 +136,14 @@ public class RegionsDatabase extends SqlDatabase {
             }
 
             statement.executeBatch();
+        });
+    }
+
+    public void updateRegionFlag(Region region) {
+        this.prepareClosingStatement(UPDATE_REGION_FLAGS_STATEMENT, statement -> {
+            statement.setBytes(1, region.binaryFlags().asBinary());
+            statement.setString(2, region.uuid().toString());
+            statement.executeUpdate();
         });
     }
 }
