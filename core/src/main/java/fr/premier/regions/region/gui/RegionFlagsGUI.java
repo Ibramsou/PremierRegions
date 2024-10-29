@@ -8,6 +8,7 @@ import fr.premier.regions.api.flag.FlagState;
 import fr.premier.regions.flag.Flag;
 import fr.premier.regions.region.Region;
 import fr.premier.regions.util.ItemBuilder;
+import fr.premier.regions.util.PageUtils;
 import org.bukkit.Material;
 
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public class RegionFlagsGUI extends ChestGui {
         this.region = region;
         this.plugin = plugin;
 
-        final PaginatedPane pane = new PaginatedPane(0, 0, 6, 9);
+        final PaginatedPane pane = new PaginatedPane(0, 0, 5, 9);
         final List<GuiItem> items = new ArrayList<>();
         this.plugin.getFlagManager().getFlags().values().forEach(flag -> {
             GuiItem guiItem = ItemBuilder.buildGuiItem(Material.PAPER, "&7" + flag.getDisplayName(), this.buildStateLore(flag));
@@ -37,6 +38,7 @@ public class RegionFlagsGUI extends ChestGui {
         pane.populateWithGuiItems(items);
         this.addPane(pane);
         this.setOnGlobalClick(event -> event.setCancelled(true));
+        PageUtils.addNavigationItems(this, pane);
     }
 
     public void onFlagClick(Flag flag) {

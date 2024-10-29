@@ -6,6 +6,7 @@ import com.github.stefvanschie.inventoryframework.pane.PaginatedPane;
 import fr.premier.regions.RegionsPlugin;
 import fr.premier.regions.region.Region;
 import fr.premier.regions.util.ItemBuilder;
+import fr.premier.regions.util.PageUtils;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
@@ -25,10 +26,11 @@ public class RegionPagesGUI extends ChestGui {
             guiItem.setAction(event -> this.onRegionClick(region, event));
             items.add(guiItem);
         });
-        final PaginatedPane pane = new PaginatedPane(0, 0, 6, 9);
+        final PaginatedPane pane = new PaginatedPane(0, 0, 5, 9);
         pane.populateWithGuiItems(items);
         this.addPane(pane);
         this.setOnGlobalClick(event -> event.setCancelled(true));
+        PageUtils.addNavigationItems(this, pane);
     }
 
     private void onRegionClick(Region region, InventoryClickEvent event) {
