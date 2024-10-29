@@ -148,6 +148,14 @@ public class RegionsCommand extends Command {
     }
 
     private void sendHelp(CommandSender sender) {
-
+        sender.sendMessage("§2Regions Help:");
+        sender.sendMessage("§a/regions - Open GUI");
+        sender.sendMessage("§a/regions <region> - Open region GUI");
+        sender.sendMessage("§a/regions create <region> - Create a new region");
+        sender.sendMessage("§a/regions delete <region> - Delete a region");
+        sender.sendMessage("§a/regions wand - Give region selection wand");
+        sender.sendMessage("§a/regions add <region> <player> - Add player to region whitelist");
+        sender.sendMessage("§a/regions remove <region> <player> - Remove player to region whitelist");
+        sender.sendMessage("§a/regions flag <region> <flag> <state> - Change state of a region flag");
     }
 }
