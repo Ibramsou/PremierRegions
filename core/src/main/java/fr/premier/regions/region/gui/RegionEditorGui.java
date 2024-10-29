@@ -5,11 +5,10 @@ import com.github.stefvanschie.inventoryframework.gui.type.ChestGui;
 import com.github.stefvanschie.inventoryframework.pane.StaticPane;
 import com.github.stefvanschie.inventoryframework.pane.util.Slot;
 import fr.premier.regions.RegionsPlugin;
+import fr.premier.regions.data.PlayerData;
 import fr.premier.regions.region.Region;
-import fr.premier.regions.stage.StageResult;
-import fr.premier.regions.stage.impl.ChatStage;
 import fr.premier.regions.util.ItemBuilder;
-import io.papermc.paper.event.player.AsyncChatEvent;
+import fr.premier.regions.util.OfflinePlayerUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -48,31 +47,46 @@ public class RegionEditorGui extends ChestGui {
     }
 
     private void onRename(InventoryClickEvent event) {
-        this.plugin.getStageManager().addStage((Player) event.getWhoClicked(), (ChatStage) (chatEvent, message) -> {
-            if (message.split(" ", 2).length > 1) {
-                chatEvent.getPlayer().sendMessage(Component.text("Please type a correct name").color(NamedTextColor.RED));
-                return StageResult.CANCELLED;
+        this.plugin.getStageManager().createChatMessageStage(event, (player, message) -> {
+            if (this.plugin.getRegionManager().getRegion(this.region.getFirstLocation().getWorld(), message) != null) {
+                player.sendMessage(Component.text("A region with that name already exists in this world").color(NamedTextColor.RED));
+                return;
             }
-
             this.region.setName(message);
             Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> this.plugin.getDatabase().updateRegionName(region));
-            return StageResult.DONE;
         });
     }
 
     private void onWhitelistAdd(InventoryClickEvent event) {
-        this.plugin.getStageManager().addStage((Player) event.getWhoClicked(), (ChatStage) (chatEvent, message) -> {
-            if (message.split(" ", 2).length > 1) {
-                chatEvent.getPlayer().sendMessage(Component.text("Please type a correct name").color(NamedTextColor.RED));
-                return StageResult.CANCELLED;
+        this.plugin.getStageManager().createChatMessageStage(event, (player, message) -> OfflinePlayerUtil.getOfflinePlayerByName(message, false, offlinePlayer -> {
+            final PlayerData playerData = this.plugin.getPlayerDataManager().getDirectPlayerData(offlinePlayer.getUniqueId());
+            if (playerData.getBinaryWhitelistedRegions().getValue().contains(this.region)) {
+                player.sendMessage(Component.text("This player is already whitelisted to this region.").color(NamedTextColor.RED));
+                return;
             }
 
-
-        });
+            playerData.getBinaryWhitelistedRegions().getUpdateValue(regions -> {
+                regions.add(this.region);
+                playerData.save();
+                player.sendMessage(Component.text("You whitelisted " + offlinePlayer.getName() + " to this region.").color(NamedTextColor.GREEN));
+            });
+        }, () -> player.sendMessage(Component.text("This player never connected to server").color(NamedTextColor.RED))));
     }
 
     private void onWhitelistRemove(InventoryClickEvent event) {
+        this.plugin.getStageManager().createChatMessageStage(event, (player, message) -> OfflinePlayerUtil.getOfflinePlayerByName(message, false, offlinePlayer -> {
+            final PlayerData playerData = this.plugin.getPlayerDataManager().getDirectPlayerData(offlinePlayer.getUniqueId());
+            if (!playerData.getBinaryWhitelistedRegions().getValue().contains(this.region)) {
+                player.sendMessage(Component.text("This player is not whitelisted to this region.").color(NamedTextColor.RED));
+                return;
+            }
 
+            playerData.getBinaryWhitelistedRegions().getUpdateValue(regions -> {
+                regions.remove(this.region);
+                playerData.save();
+                player.sendMessage(Component.text("You un-whitelisted " + offlinePlayer.getName() + " to this region.").color(NamedTextColor.RED));
+            });
+        }, () -> player.sendMessage(Component.text("This player never connected to server").color(NamedTextColor.RED))));
     }
 
     private void onRedefineLocation(InventoryClickEvent event) {
@@ -88,4 +102,5 @@ public class RegionEditorGui extends ChestGui {
     private void onOpenFlagEditor(InventoryClickEvent event) {
 
     }
+
 }

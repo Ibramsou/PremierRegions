@@ -44,6 +44,10 @@ public class PlayerDataManager {
         });
     }
 
+    public PlayerData getDirectPlayerData(UUID uuid) {
+        return this.getPlayerData(uuid).join();
+    }
+
     public CompletableFuture<PlayerData> getPlayerData(final UUID uuid) {
         final CompletableFuture<PlayerData> future = new CompletableFuture<>();
         final PlayerData playerData = playerDataMap.get(uuid);

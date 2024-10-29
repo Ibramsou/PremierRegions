@@ -1,13 +1,17 @@
 package fr.premier.regions.stage;
 
+import fr.premier.regions.stage.impl.ChatStage;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
+import org.bukkit.event.inventory.InventoryClickEvent;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 public class StageManager {
 
@@ -18,8 +22,21 @@ public class StageManager {
         player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(stage.chatMessage()));
     }
 
+    public void createChatMessageStage(InventoryClickEvent event, BiConsumer<Player, String> consumer) {
+        final Player player = (Player) event.getWhoClicked();
+        this.addStage(player, (ChatStage) (chatEvent, message) -> {
+            if (message.split(" ", 2).length > 1) {
+                chatEvent.getPlayer().sendMessage(Component.text("Please type a correct name").color(NamedTextColor.RED));
+                return StageResult.CANCELLED;
+            }
+
+            consumer.accept(player, message);
+            return StageResult.DONE;
+        });
+    }
+
     @SuppressWarnings("unchecked")
-    public <V extends Event, K> void executeStage(UUID uuid, V event) {
+    protected <V extends Event, K> void executeStage(UUID uuid, V event) {
         Stage<?, ?> currentStage = this.stageMap.get(uuid);
         if (currentStage.eventType() == event.getClass()) return;
         Stage<V, K> castStage = (Stage<V, K>) currentStage;
