@@ -29,22 +29,6 @@ public class PlayerDataManager {
         this.dataService.shutdownNow().forEach(Runnable::run);
     }
 
-    public void whitelist(PlayerData playerData, Region region) {
-        playerData.getBinaryWhitelistedRegions().getUpdateValue(regions -> {
-            if (regions.add(region)) {
-                playerData.save();
-            }
-        });
-    }
-
-    public void unWhitelist(PlayerData playerData, Region region) {
-        playerData.getBinaryWhitelistedRegions().getUpdateValue(regions -> {
-            if (regions.remove(region)) {
-                playerData.save();
-            }
-        });
-    }
-
     public PlayerData getDirectPlayerData(UUID uuid) {
         return this.getPlayerData(uuid).join();
     }

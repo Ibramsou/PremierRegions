@@ -1,6 +1,7 @@
 package fr.premier.regions.region;
 
 import fr.premier.regions.RegionsPlugin;
+import fr.premier.regions.api.region.PreRegionEventResult;
 import fr.premier.regions.api.flag.FlagState;
 import fr.premier.regions.binary.impl.BinaryFlags;
 import fr.premier.regions.data.PlayerData;
@@ -9,10 +10,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiPredicate;
 
 public class RegionManager {
 
@@ -24,35 +26,48 @@ public class RegionManager {
         this.plugin = plugin;
     }
 
-    public boolean matchFlagState(Player player, Flag flag) {
-        return matchFlagState(player, flag, player.getLocation());
+    public PreRegionEventResult getEventResult(@Nullable UUID uuid, Flag flag, Location location, boolean cancelled) {
+        final Boolean shouldCancel;
+        if (uuid == null) {
+            shouldCancel = this.shouldCancel(flag, location);
+        } else {
+            shouldCancel = this.shouldCancel(uuid, flag, location);
+        }
+        if (shouldCancel == null) {
+            return PreRegionEventResult.NONE;
+        }
+        if (shouldCancel && !cancelled) {
+            return PreRegionEventResult.CANCEL;
+        } else if (!shouldCancel && cancelled) {
+            return PreRegionEventResult.ALLOW;
+        }
+
+        return PreRegionEventResult.NONE;
     }
 
-    public boolean matchFlagState(Player player, Flag flag, Location location) {
-        return matchFlagState(player.getUniqueId(), flag, location);
-    }
-
-    public boolean matchFlagState(Flag flag, Location location) {
+    private Boolean shouldCancel(Flag flag, Location location, BiPredicate<Region, FlagState> predicate) {
         Chunk chunk = location.getChunk();
         List<Region> regions = chunkRegions.get(chunk);
-        if (regions == null) return true;
-        return regions.stream().anyMatch(region -> {
-            FlagState flagState = this.getFlagState(region, flag);
-            return flagState == FlagState.EVERYONE || flagState == FlagState.WHITELIST;
-        });
+        if (regions == null) return null;
+        return regions.stream().filter(region -> {
+            final Location first = region.getFirstLocation();
+            final Location second = region.getSecondLocation();
+            return location.getX() >= Math.min(first.getBlockX(), second.getBlockX()) && location.getX() <= Math.max(first.getBlockX(), second.getBlockX()) &&
+                    location.getY() >= Math.min(first.getBlockY(), second.getBlockY()) && location.getY() <= Math.max(first.getBlockY(), second.getBlockY()) &&
+                    location.getZ() >= Math.min(first.getBlockZ(), second.getBlockZ()) && location.getZ() <= Math.max(first.getBlockZ(), second.getBlockZ());
+        }).anyMatch(region -> predicate.test(region, this.getFlagState(region, flag)));
     }
 
-    public boolean matchFlagState(UUID uuid, Flag flag, Location location) {
-        Chunk chunk = location.getChunk();
+    private Boolean shouldCancel(Flag flag, Location location) {
+        return this.shouldCancel(flag, location, (region, state) -> state == FlagState.NONE || state == FlagState.WHITELIST);
+    }
+
+    private Boolean shouldCancel(UUID uuid, Flag flag, Location location) {
         final PlayerData playerData = this.plugin.getPlayerDataManager().getPlayerData(uuid).join();
-        List<Region> regions = chunkRegions.get(chunk);
-        if (regions == null) return true;
-        return regions.stream().anyMatch(region -> {
-            FlagState flagState = this.getFlagState(region, flag);
-            if (flagState == null) return false;
-            if (flagState == FlagState.NONE) return false;
-            if (flagState == FlagState.EVERYONE) return true;
-            if (flagState == FlagState.WHITELIST) return playerData.getBinaryWhitelistedRegions().getValue().contains(region);
+        return shouldCancel(flag, location, (region, state) -> {
+            if (state == FlagState.NONE) return true;
+            if (state == FlagState.EVERYONE) return false;
+            if (state == FlagState.WHITELIST) return !playerData.getBinaryWhitelistedRegions().getValue().contains(region);
             return false;
         });
     }
@@ -123,11 +138,15 @@ public class RegionManager {
     }
 
     public void loadRegion(Region region) {
-        final Location min = region.getFirstLocation();
-        final Location max = region.getSecondLocation();
-        final World world = min.getWorld();
-        for (int x = min.getBlockX() << 4; x <= max.getBlockX() << 4; x++) {
-            for (int z = min.getBlockZ() << 4; z <= max.getBlockZ() << 4; z++) {
+        final Location first = region.getFirstLocation();
+        final Location second = region.getSecondLocation();
+        final World world = first.getWorld();
+        final int minX = Math.min(first.getBlockX(), second.getBlockX()) >> 4;
+        final int minZ = Math.min(first.getBlockZ(), second.getBlockZ()) >> 4;
+        final int maxX = Math.max(first.getBlockX(), second.getBlockX()) >> 4;
+        final int maxZ = Math.max(first.getBlockZ(), second.getBlockZ()) >> 4;
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
                 Chunk chunk = world.getChunkAt(x, z, false);
                 region.getChunks().add(chunk);
                 this.chunkRegions.computeIfAbsent(chunk, chunk1 -> new ArrayList<>()).add(region);

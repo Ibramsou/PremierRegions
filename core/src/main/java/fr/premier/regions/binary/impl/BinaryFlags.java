@@ -45,7 +45,7 @@ public class BinaryFlags extends BinaryMapStorage<Map<Flag, FlagState>> {
                 final byte ordinal = stream.readByte();
                 final Flag flag = RegionsPlugin.getInstance().getFlagManager().getDefaultFlag(name);
                 if (flag == null) continue;
-                value.put(flag, FlagState.values()[ordinal - 1]);
+                value.put(flag, FlagState.values()[ordinal]);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

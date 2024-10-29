@@ -3,6 +3,7 @@ package fr.premier.regions;
 import fr.premier.regions.api.PreRegionsAPI;
 import fr.premier.regions.api.flag.FlagState;
 import fr.premier.regions.api.flag.PreFlag;
+import fr.premier.regions.api.region.PreRegionEventResult;
 import fr.premier.regions.flag.Flag;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -33,22 +34,7 @@ public class RegionsHandler implements PreRegionsAPI {
     }
 
     @Override
-    public boolean matchFlag(Player player, PreFlag flag) {
-        return this.plugin.getRegionManager().matchFlagState(player, (Flag) flag);
-    }
-
-    @Override
-    public boolean matchFlag(Player player, PreFlag flag, Location location) {
-        return this.plugin.getRegionManager().matchFlagState(player, (Flag) flag, location);
-    }
-
-    @Override
-    public boolean matchFlag(UUID uuid, PreFlag flag, Location location) {
-        return this.plugin.getRegionManager().matchFlagState(uuid, (Flag) flag, location);
-    }
-
-    @Override
-    public boolean matchFlag(PreFlag flag, Location location) {
-        return this.plugin.getRegionManager().matchFlagState((Flag) flag, location);
+    public PreRegionEventResult getEventResult(@Nullable UUID uuid, PreFlag flag, Location location, boolean cancelled) {
+        return this.plugin.getRegionManager().getEventResult(uuid, (Flag) flag, location, cancelled);
     }
 }

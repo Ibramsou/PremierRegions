@@ -42,7 +42,7 @@ public class RegionFlagsGUI extends ChestGui {
         final FlagState currentState = this.plugin.getRegionManager().getFlagState(region, flag);
         final int ordinal = currentState.ordinal();
         int next = 0;
-        if (ordinal != FlagState.values().length) {
+        if (ordinal != FlagState.values().length - 1) {
             next = ordinal + 1;
         }
         this.plugin.getRegionManager().setFlagState(region, flag, FlagState.values()[next]);

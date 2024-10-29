@@ -1,7 +1,7 @@
 package fr.premier.regions.region;
 
-import fr.premier.regions.api.PreRegionsAPI;
 import fr.premier.regions.api.flag.PreFlag;
+import fr.premier.regions.api.region.PreRegionUtils;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,37 +15,33 @@ import org.bukkit.event.player.PlayerInteractEvent;
 
 public class RegionListener implements Listener {
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onBreak(BlockBreakEvent event) {
-        if (!PreRegionsAPI.getInstance().matchFlag(event.getPlayer(), PreFlag.BLOCK_BREAK)) event.setCancelled(true);
+        PreRegionUtils.handleCancelablePlayerEvent(event, event.getPlayer(), event.getBlock().getLocation(), PreFlag.BLOCK_BREAK);
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onPlace(BlockPlaceEvent event) {
-        if (!PreRegionsAPI.getInstance().matchFlag(event.getPlayer(), PreFlag.BLOCK_PLACE)) event.setCancelled(true);
+        PreRegionUtils.handleCancelablePlayerEvent(event, event.getPlayer(), event.getBlock().getLocation(), PreFlag.BLOCK_PLACE);
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onInteract(PlayerInteractEvent event) {
-        if (!PreRegionsAPI.getInstance().matchFlag(event.getPlayer(), PreFlag.INTERACT)) event.setCancelled(true);
+        PreRegionUtils.handleCancelablePlayerEvent(event, event.getPlayer(), PreFlag.INTERACT);
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onDamage(EntityDamageEvent event) {
-        if (!PreRegionsAPI.getInstance().matchFlag(PreFlag.ENTITY_DAMAGE, event.getEntity().getLocation())) {
-            event.setCancelled(true);
-        }
+        PreRegionUtils.handleCancelableEvent(event, null, event.getEntity().getLocation(), PreFlag.ENTITY_DAMAGE);
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         final Location location = event.getEntity().getLocation();
         if (event.getDamager() instanceof Player player) {
-            if (!PreRegionsAPI.getInstance().matchFlag(player, PreFlag.ENTITY_DAMAGE, location)) {
-                event.setCancelled(true);
-            }
-        } else if (!PreRegionsAPI.getInstance().matchFlag(PreFlag.ENTITY_DAMAGE, location)) {
-            event.setCancelled(true);
+            PreRegionUtils.handleCancelablePlayerEvent(event, player, location, PreFlag.ENTITY_DAMAGE);
+        } else {
+            PreRegionUtils.handleCancelableEvent(event, null, location, PreFlag.ENTITY_DAMAGE);
         }
     }
 }
