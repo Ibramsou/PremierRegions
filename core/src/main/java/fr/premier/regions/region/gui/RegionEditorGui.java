@@ -44,6 +44,8 @@ public class RegionEditorGui extends ChestGui {
         pane.addItem(whitelistRemove, Slot.fromIndex(2));
         pane.addItem(redefineLocation, Slot.fromIndex(3));
         pane.addItem(editFlags, Slot.fromIndex(4));
+
+        this.addPane(pane);
     }
 
     private void onRename(InventoryClickEvent event) {
