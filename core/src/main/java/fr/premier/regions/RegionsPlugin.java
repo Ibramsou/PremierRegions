@@ -33,6 +33,9 @@ public class RegionsPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        this.saveDefaultConfig();
+        this.reloadConfig();
+
         instance = this;
 
         this.flagManager = new FlagManager();

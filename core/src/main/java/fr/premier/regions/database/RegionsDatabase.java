@@ -44,7 +44,7 @@ public class RegionsDatabase extends SqlDatabase {
     private final RegionsPlugin plugin;
 
     public RegionsDatabase(RegionsPlugin plugin) {
-        super(new RegionsCredential());
+        super(new RegionsCredential(plugin));
         this.plugin = plugin;
         this.loadTables();
         this.loadRegions();

@@ -1,0 +1,9 @@
+custom-url: ""
+host: "localhost"
+port: 3306
+database: premier_regions
+user: "root"
+password: ""
+driver: "MYSQL" # MYSQL & MARIADB
+max-pool-size: 5
+

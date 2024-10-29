@@ -1,23 +1,31 @@
 package fr.premier.regions.database;
 
+import fr.premier.regions.RegionsPlugin;
 import fr.premier.regions.sql.SqlCredential;
 import fr.premier.regions.sql.SqlDriverType;
+import org.bukkit.configuration.file.FileConfiguration;
 
 public class RegionsCredential implements SqlCredential {
+
+    private final FileConfiguration configuration;
+
+    public RegionsCredential(RegionsPlugin plugin) {
+        this.configuration = plugin.getConfig();
+    }
+
     @Override
     public SqlDriverType getDriverType() {
-        return SqlDriverType.MYSQL;
+        return SqlDriverType.valueOf(this.configuration.getString("driver", SqlDriverType.MYSQL.name()).toUpperCase());
     }
 
     @Override
     public String getCustomUrl() {
-        return ""; // None
+        return this.configuration.getString("custom-url", "");
     }
 
-    // TODO: Replace by config values
     @Override
     public String getHost() {
-        return "localhost";
+        return this.configuration.getString("host", "localhost");
     }
 
     @Override
@@ -27,21 +35,21 @@ public class RegionsCredential implements SqlCredential {
 
     @Override
     public String getDatabase() {
-        return "premier_regions";
+        return this.configuration.getString("database", "premier_regions");
     }
 
     @Override
     public String getUser() {
-        return "root";
+        return this.configuration.getString("user", "root");
     }
 
     @Override
     public String getPassword() {
-        return "root";
+        return this.configuration.getString("password", "");
     }
 
     @Override
     public int getPoolSize() {
-        return 5;
+        return this.configuration.getInt("max-pool-size", 5);
     }
 }

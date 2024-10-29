@@ -6,7 +6,6 @@ import fr.premier.regions.api.flag.PreFlag;
 import fr.premier.regions.api.region.PreRegionEventResult;
 import fr.premier.regions.flag.Flag;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import javax.annotation.Nullable;
