@@ -14,15 +14,14 @@ import org.bukkit.persistence.PersistentDataType;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class WandManager {
 
-    private final RegionsPlugin plugin;
     private final NamespacedKey key;
     private final Map<WandKey, WandSelection> selectionMap = new HashMap<>();
 
     public WandManager(RegionsPlugin plugin) {
-        this.plugin = plugin;
         this.key = new NamespacedKey(plugin, "wand");
     }
 
@@ -30,14 +29,20 @@ public class WandManager {
         this.selectionMap.remove(key);
     }
 
-    public boolean createRegion(Player player, String name) {
+    public void getRemoveSelection(Player player, String name, Consumer<WandSelection> consumer, Runnable orElse) {
         final WandKey key = WandKey.of(player);
         final WandSelection selection = this.selectionMap.get(key);
-        if (selection == null) return false;
-        if (selection.getFirst() == null || selection.getSecond() == null) return false;
-        this.plugin.getRegionManager().addRegion(name, selection.getFirst(), selection.getSecond());
+        if (selection == null) {
+            orElse.run();
+            return;
+        }
+        if (selection.getFirst() == null || selection.getSecond() == null) {
+            orElse.run();
+            return;
+        }
+
+        consumer.accept(selection);
         this.selectionMap.remove(key);
-        return true;
     }
 
     public void updateSelection(Player player, Location location, BiConsumer<WandSelection, Location> consumer) {

@@ -58,7 +58,7 @@ public class RegionManager {
     }
 
     public void setFlagState(Region region, Flag flag, FlagState state) {
-        region.binaryFlags().getUpdateValue(map -> {
+        region.getBinaryFlags().getUpdateValue(map -> {
             if (map.get(flag) == state) return;
             if (flag.defaultState() == state) {
                 map.remove(flag);
@@ -70,7 +70,7 @@ public class RegionManager {
     }
 
     public FlagState getFlagState(Region region, Flag flag) {
-        final FlagState currentState = region.binaryFlags().getValue().get(flag);
+        final FlagState currentState = region.getBinaryFlags().getValue().get(flag);
         if (currentState == null) {
             return flag.defaultState();
         }
@@ -79,7 +79,7 @@ public class RegionManager {
     }
 
     public int hashRegion(Region region) {
-        return hashRegion(region.minLocation().getWorld(), region.name());
+        return hashRegion(region.getFirstLocation().getWorld(), region.getName());
     }
 
     public int hashRegion(World world, String name) {
@@ -123,13 +123,13 @@ public class RegionManager {
     }
 
     public void loadRegion(Region region) {
-        final Location min = region.minLocation();
-        final Location max = region.maxLocation();
+        final Location min = region.getFirstLocation();
+        final Location max = region.getSecondLocation();
         final World world = min.getWorld();
         for (int x = min.getBlockX() << 4; x <= max.getBlockX() << 4; x++) {
             for (int z = min.getBlockZ() << 4; z <= max.getBlockZ() << 4; z++) {
                 Chunk chunk = world.getChunkAt(x, z, false);
-                region.chunks().add(chunk);
+                region.getChunks().add(chunk);
                 this.chunkRegions.computeIfAbsent(chunk, chunk1 -> new ArrayList<>()).add(region);
             }
         }

@@ -35,9 +35,11 @@ public class RegionsDatabase extends SqlDatabase {
     private static final String SAVE_USER_STATEMENT = "INSERT INTO players (uuid, whitelisted_regions) VALUES (?, ?) " +
             "ON DUPLICATE KEY UPDATE whitelisted_regions = ?";
     private static final String LOAD_REGIONS_STATEMENT = "SELECT * FROM regions";
-    private static final String INSERT_REGION_STATEMENT = "INSERT INTO regions (name, min_x, min_y, min_z, max_x, max_y, max_z, flags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    private static final String DELETE_REGION_STATEMENT = "DELETE FROM regions WHERE name = ?";
-    private static final String UPDATE_REGION_FLAGS_STATEMENT = "UPDATE regions SET flags = ? WHERE name = ?";
+    private static final String INSERT_REGION_STATEMENT = "INSERT INTO regions (uuid, name, world, min_x, min_y, min_z, max_x, max_y, max_z, flags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String DELETE_REGION_STATEMENT = "DELETE FROM regions WHERE uuid = ?";
+    private static final String UPDATE_REGION_FLAGS_STATEMENT = "UPDATE regions SET flags = ? WHERE uuid = ?";
+    private static final String UPDATE_REGION_POSITIONS_STATEMENT = "UPDATE regions SET min_x = ?, min_y = ?, min_z, max_x = ?, max_y = ?, max_z = ? WHERE uuid = ?";
+    private static final String UPDATE_REGION_NAME_STATEMENT = "UPDATE regions SET name = ? WHERE uuid = ?";
 
     private final RegionsPlugin plugin;
 
@@ -88,23 +90,23 @@ public class RegionsDatabase extends SqlDatabase {
 
     public void insertRegion(Region region) {
         this.prepareClosingStatement(INSERT_REGION_STATEMENT, statement -> {
-            statement.setString(1, region.uuid().toString());
-            statement.setString(2, region.name());
-            statement.setString(3, region.minLocation().getWorld().getName());
-            statement.setInt(4, region.minLocation().getBlockX());
-            statement.setInt(5, region.minLocation().getBlockY());
-            statement.setInt(6, region.minLocation().getBlockZ());
-            statement.setInt(7, region.maxLocation().getBlockX());
-            statement.setInt(8, region.maxLocation().getBlockY());
-            statement.setInt(9, region.maxLocation().getBlockZ());
-            statement.setBytes(10, region.binaryFlags().asBinary());
+            statement.setString(1, region.getUUID().toString());
+            statement.setString(2, region.getName());
+            statement.setString(3, region.getFirstLocation().getWorld().getName());
+            statement.setInt(4, region.getFirstLocation().getBlockX());
+            statement.setInt(5, region.getFirstLocation().getBlockY());
+            statement.setInt(6, region.getFirstLocation().getBlockZ());
+            statement.setInt(7, region.getSecondLocation().getBlockX());
+            statement.setInt(8, region.getSecondLocation().getBlockY());
+            statement.setInt(9, region.getSecondLocation().getBlockZ());
+            statement.setBytes(10, region.getBinaryFlags().asBinary());
             statement.executeUpdate();
         });
     }
 
     public void deleteRegion(Region region) {
         this.prepareClosingStatement(DELETE_REGION_STATEMENT, statement -> {
-            statement.setString(1, region.uuid().toString());
+            statement.setString(1, region.getUUID().toString());
             statement.executeUpdate();
         });
     }
@@ -139,10 +141,33 @@ public class RegionsDatabase extends SqlDatabase {
         });
     }
 
+    public void updateRegionName(Region region) {
+        this.prepareClosingStatement(UPDATE_REGION_NAME_STATEMENT, statement -> {
+            statement.setString(1, region.getName());
+            statement.setString(2, region.getUUID().toString());
+            statement.executeUpdate();
+        });
+    }
+
+    public void updateRegionPositions(Region region) {
+        this.prepareClosingStatement(UPDATE_REGION_POSITIONS_STATEMENT, statement -> {
+            final Location first = region.getFirstLocation();
+            final Location second = region.getSecondLocation();
+            statement.setInt(1, first.getBlockX());
+            statement.setInt(2, first.getBlockY());
+            statement.setInt(3, first.getBlockZ());
+            statement.setInt(4, second.getBlockX());
+            statement.setInt(5, second.getBlockY());
+            statement.setInt(6, second.getBlockZ());
+            statement.setString(7, region.getUUID().toString());
+            statement.executeUpdate();
+        });
+    }
+
     public void updateRegionFlag(Region region) {
         this.prepareClosingStatement(UPDATE_REGION_FLAGS_STATEMENT, statement -> {
-            statement.setBytes(1, region.binaryFlags().asBinary());
-            statement.setString(2, region.uuid().toString());
+            statement.setBytes(1, region.getBinaryFlags().asBinary());
+            statement.setString(2, region.getUUID().toString());
             statement.executeUpdate();
         });
     }
