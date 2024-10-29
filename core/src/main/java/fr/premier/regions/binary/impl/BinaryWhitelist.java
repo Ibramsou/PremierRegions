@@ -21,7 +21,8 @@ public class BinaryWhitelist extends BinaryCollectionStorage<Set<Region>> {
             try (DataOutputStream output = new DataOutputStream(stream)) {
                 output.writeInt(value.size());
                 for (Region region : value) {
-                    output.writeInt(RegionsPlugin.getInstance().getRegionManager().hashRegion(region));
+                    int hashcode = RegionsPlugin.getInstance().getRegionManager().hashRegion(region);
+                    output.writeInt(hashcode);
                 }
                 return stream.toByteArray();
             }
@@ -37,9 +38,9 @@ public class BinaryWhitelist extends BinaryCollectionStorage<Set<Region>> {
             this.value.clear();
             final int size = stream.readInt();
             for (int i = 0; i < size; i++) {
-                final Region region = RegionsPlugin.getInstance().getRegionManager().getRegion(stream.readInt());
-                if (region == null) continue;
-                this.value.add(region);
+                int hashcode = stream.readInt();
+                final Region region = RegionsPlugin.getInstance().getRegionManager().getRegion(hashcode);
+                if (region != null) this.value.add(region);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

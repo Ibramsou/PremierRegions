@@ -11,7 +11,7 @@ public class PlayerData {
     private final UUID uuid;
     private final BinaryWhitelist whitelistedRegions;
     private Region currentRegion;
-    private boolean saved;
+    private boolean waitingSave;
 
     public PlayerData(UUID uuid, BinaryWhitelist whitelistedRegions) {
         this.uuid = uuid;
@@ -35,8 +35,12 @@ public class PlayerData {
     }
 
     public void save() {
-        if (this.saved) return;
-        this.saved = true;
+        if (this.waitingSave) return;
+        this.waitingSave = true;
         RegionsPlugin.getInstance().getPlayerDataManager().getSaveQueue().add(this);
+    }
+
+    public void setWaitingSave(boolean waitingSave) {
+        this.waitingSave = waitingSave;
     }
 }
