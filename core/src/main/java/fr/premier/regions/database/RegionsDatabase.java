@@ -68,7 +68,8 @@ public class RegionsDatabase extends SqlDatabase {
                 while (resultSet.next()) {
                     final UUID uuid = UUID.fromString(resultSet.getString("uuid"));
                     final String name = resultSet.getString("name");
-                    final World world = Bukkit.getWorld(name);
+                    final String worldName = resultSet.getString("world");
+                    final World world = Bukkit.getWorld(worldName);
                     if (world == null) continue;
                     final int minX = resultSet.getInt("min_x");
                     final int minY = resultSet.getInt("min_y");

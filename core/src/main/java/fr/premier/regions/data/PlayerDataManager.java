@@ -21,6 +21,7 @@ public class PlayerDataManager {
 
     public PlayerDataManager(RegionsPlugin plugin) {
         this.plugin = plugin;
+        Bukkit.getOnlinePlayers().forEach(player -> this.getPlayerData(player.getUniqueId(), false));
     }
 
     public void disable() {
@@ -49,12 +50,16 @@ public class PlayerDataManager {
     }
 
     public CompletableFuture<PlayerData> getPlayerData(final UUID uuid) {
+        return this.getPlayerData(uuid, true);
+    }
+
+    public CompletableFuture<PlayerData> getPlayerData(final UUID uuid, boolean synchronize) {
         final CompletableFuture<PlayerData> future = new CompletableFuture<>();
         final PlayerData playerData = playerDataMap.get(uuid);
         if (playerData == null) {
             Runnable load = () -> {
                 final PlayerData result = this.plugin.getDatabase().loadUser(uuid);
-                if (Bukkit.isPrimaryThread()) {
+                if (synchronize && Bukkit.isPrimaryThread()) {
                     future.complete(result);
                     this.playerDataMap.put(uuid, result);
                 } else {
