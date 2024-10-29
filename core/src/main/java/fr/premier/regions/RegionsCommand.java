@@ -7,10 +7,15 @@ import fr.premier.regions.region.Region;
 import fr.premier.regions.region.gui.RegionEditorGui;
 import fr.premier.regions.region.gui.RegionPagesGUI;
 import fr.premier.regions.util.OfflinePlayerUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class RegionsCommand extends Command {
 
@@ -129,7 +134,12 @@ public class RegionsCommand extends Command {
                 }
                 break;
                 case "whitelist": {
-
+                    Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
+                        this.plugin.getDatabase().saveWhitelists();
+                        List<OfflinePlayer> players = this.plugin.getDatabase().getWhitelistedPlayers(region);
+                        String playerNames = StringUtils.join(players.stream().map(OfflinePlayer::getName).toList(), "§a,§f ");
+                        sender.sendMessage("§aWhitelisted players: §f" + playerNames);
+                    });
                 }
                 break;
             }

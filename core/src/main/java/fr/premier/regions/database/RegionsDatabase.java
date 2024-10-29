@@ -7,6 +7,7 @@ import fr.premier.regions.region.Region;
 import fr.premier.regions.sql.SqlDatabase;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 
 import java.sql.ResultSet;
@@ -38,6 +39,7 @@ public class RegionsDatabase extends SqlDatabase {
     private static final String UPDATE_REGION_FLAGS_STATEMENT = "UPDATE regions SET flags = ? WHERE uuid = ?";
     private static final String UPDATE_REGION_POSITIONS_STATEMENT = "UPDATE regions SET min_x = ?, min_y = ?, min_z, max_x = ?, max_y = ?, max_z = ? WHERE uuid = ?";
     private static final String UPDATE_REGION_NAME_STATEMENT = "UPDATE regions SET name = ? WHERE uuid = ?";
+    private static final String LIST_WHITELIST_STATEMENT = "SELECT * FROM whitelist WHERE hashcode = ?";
 
     private final RegionsPlugin plugin;
 
@@ -147,8 +149,6 @@ public class RegionsDatabase extends SqlDatabase {
                     unWhitelistQueue.add(new WhitelistElement(playerData.getUuid(), this.plugin.getRegionManager().hashRegion(whitelistedRegion)));
                 }
             }
-
-
         }
 
         if (!whitelistQueue.isEmpty()) {
@@ -199,6 +199,23 @@ public class RegionsDatabase extends SqlDatabase {
             statement.setString(7, region.getUUID().toString());
             statement.executeUpdate();
         });
+    }
+
+    public List<OfflinePlayer> getWhitelistedPlayers(Region region) {
+        final int hashcode = this.plugin.getRegionManager().hashRegion(region);
+        final List<OfflinePlayer> players = new ArrayList<>();
+        this.prepareClosingStatement(LIST_WHITELIST_STATEMENT, statement -> {
+            statement.setInt(1, hashcode);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(UUID.fromString(resultSet.getString("uuid")));
+                    if (!offlinePlayer.isOnline() && !offlinePlayer.hasPlayedBefore()) continue;
+                    players.add(offlinePlayer);
+                }
+            }
+        });
+
+        return players;
     }
 
     public void updateRegionFlag(Region region) {
