@@ -100,7 +100,7 @@ public class RegionEditorGui extends ChestGui {
     }
 
     private void onOpenFlagEditor(InventoryClickEvent event) {
-
+        new RegionFlagsGUI(this.region, this.plugin).show(event.getWhoClicked());
     }
 
 }

@@ -3,12 +3,12 @@ package fr.premier.regions.flag;
 import fr.premier.regions.api.flag.FlagState;
 import org.bukkit.plugin.Plugin;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class FlagManager {
 
-    private final Map<String, Flag> flags = new HashMap<>();
+    private final Map<String, Flag> flags = new LinkedHashMap<>();
 
     public FlagManager() {
         // Register default flags
@@ -37,5 +37,9 @@ public class FlagManager {
 
     public Flag getFlag(Plugin plugin, String name) {
         return flags.get(plugin.getName().toLowerCase() + "_" + name);
+    }
+
+    public Map<String, Flag> getFlags() {
+        return flags;
     }
 }
