@@ -15,7 +15,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class RegionsCommand extends Command {
 
@@ -145,6 +147,49 @@ public class RegionsCommand extends Command {
             }
         }
         return false;
+    }
+
+    @Override
+    public @NotNull List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, @NotNull String[] args) throws IllegalArgumentException {
+        if (args.length == 1) {
+            List<String> results = new ArrayList<>(List.of("create", "delete", "wand", "add", "remove", "flag"));
+            results.addAll(sortRegions(sender));
+            return results;
+        } else {
+            final String argument = args[0].toLowerCase();
+            if (argument.equals("wand")) {
+                return List.of();
+            }
+
+            if (args.length == 2) {
+                if (argument.equals("create")) {
+                    return List.of();
+                }
+
+                return sortRegions(sender);
+            } else if (args.length == 3 && argument.equals("add") || argument.equals("remove")) {
+                return super.tabComplete(sender, alias, args);
+            } else if (args.length == 3 && argument.equals("flag")) {
+                return this.plugin.getFlagManager().getFlags().keySet().stream().toList();
+            } else if (args.length == 4 && argument.equals("flag")) {
+                return Stream.of(FlagState.values()).map(Enum::name).toList();
+            }
+        }
+        return List.of();
+    }
+
+    private List<String> sortRegions(CommandSender sender) {
+        Stream<Region> stream = this.plugin.getRegionManager().getRegions().values().stream();
+        if (sender instanceof Player player) {
+            stream = stream.filter(region -> region.getFirstLocation().getWorld().equals(player.getWorld()));
+        }
+        return stream.map(region -> {
+            if (sender instanceof Player) {
+                return region.getName();
+            } else {
+                return region.getFirstLocation().getWorld().getName() + ":" + region.getName();
+            }
+        }).toList();
     }
 
     private void sendHelp(CommandSender sender) {
