@@ -38,6 +38,7 @@ public class StageManager {
     @SuppressWarnings("unchecked")
     protected <V extends Event, K> void executeStage(UUID uuid, V event) {
         Stage<?, ?> currentStage = this.stageMap.get(uuid);
+        if (currentStage == null) return;
         if (currentStage.eventType() == event.getClass()) return;
         Stage<V, K> castStage = (Stage<V, K>) currentStage;
         if (event instanceof AsyncChatEvent chatEvent) {

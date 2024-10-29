@@ -90,7 +90,7 @@ public class RegionEditorGui extends ChestGui {
     }
 
     private void onRedefineLocation(InventoryClickEvent event) {
-        this.plugin.getWandManager().getRemoveSelection((Player) event.getWhoClicked(), this.region.getName(), wandSelection -> {
+        this.plugin.getWandManager().getRemoveSelection((Player) event.getWhoClicked(), wandSelection -> {
             this.region.setFirstLocation(wandSelection.getFirst());
             this.region.setSecondLocation(wandSelection.getSecond());
             Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> this.plugin.getDatabase().updateRegionPositions(region));

@@ -69,6 +69,8 @@ public class PlayerDataManager {
             } else {
                 this.dataService.execute(load);
             }
+        } else {
+            future.complete(playerData);
         }
 
         return future;

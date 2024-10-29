@@ -29,7 +29,7 @@ public class WandManager {
         this.selectionMap.remove(key);
     }
 
-    public void getRemoveSelection(Player player, String name, Consumer<WandSelection> consumer, Runnable orElse) {
+    public void getRemoveSelection(Player player, Consumer<WandSelection> consumer, Runnable orElse) {
         final WandKey key = WandKey.of(player);
         final WandSelection selection = this.selectionMap.get(key);
         if (selection == null) {

@@ -5,13 +5,13 @@ import fr.premier.regions.binary.BinaryCollectionStorage;
 import fr.premier.regions.region.Region;
 
 import java.io.*;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BinaryWhitelist extends BinaryCollectionStorage<Set<Region>> {
 
     public BinaryWhitelist() {
-        super(new HashSet<>());
+        super(ConcurrentHashMap.newKeySet());
     }
 
     @Override

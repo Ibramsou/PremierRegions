@@ -26,12 +26,12 @@ public class RegionsDatabase extends SqlDatabase {
             "min_z INTEGER NOT NULL, " +
             "max_x INTEGER NOT NULL, " +
             "max_y INTEGER NOT NULL, " +
-            "max_z INTEGER NOT NULL " +
-            "flags VARBINARY(10000))";
+            "max_z INTEGER NOT NULL, " +
+            "flags varbinary(10000))";
     private static final String CREATE_PLAYERS_TABLE_STATEMENT = "CREATE TABLE IF NOT EXISTS players (" +
             "uuid VARCHAR(36) NOT NULL UNIQUE PRIMARY KEY, " +
-            "whitelisted_regions VARBINARY(10000))";
-    private static final String LOAD_USER_STATEMENT = "SELECT whitelisted_regions FROM players WHERE uuid = ?";
+            "whitelisted_regions varbinary(10000))";
+    private static final String LOAD_USER_STATEMENT = "SELECT 'whitelisted_regions' FROM players WHERE uuid = ?";
     private static final String SAVE_USER_STATEMENT = "INSERT INTO players (uuid, whitelisted_regions) VALUES (?, ?) " +
             "ON DUPLICATE KEY UPDATE whitelisted_regions = ?";
     private static final String LOAD_REGIONS_STATEMENT = "SELECT * FROM regions";
@@ -115,7 +115,7 @@ public class RegionsDatabase extends SqlDatabase {
         return this.resultPreparedStatement(LOAD_USER_STATEMENT, statement -> {
             statement.setString(1, uuid.toString());
             final PlayerData playerData = new PlayerData(uuid, new BinaryWhitelist());
-            try (ResultSet resultSet = statement.executeQuery(LOAD_USER_STATEMENT)) {
+            try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     byte[] whitelisted_regions = resultSet.getBytes("whitelisted_regions");
                     playerData.getBinaryWhitelistedRegions().loadValue(whitelisted_regions);

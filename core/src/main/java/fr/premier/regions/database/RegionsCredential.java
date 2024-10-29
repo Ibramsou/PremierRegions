@@ -6,7 +6,7 @@ import fr.premier.regions.sql.SqlDriverType;
 public class RegionsCredential implements SqlCredential {
     @Override
     public SqlDriverType getDriverType() {
-        return SqlDriverType.MARIADB;
+        return SqlDriverType.MYSQL;
     }
 
     @Override

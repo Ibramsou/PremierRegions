@@ -8,6 +8,7 @@ import fr.premier.regions.region.RegionListener;
 import fr.premier.regions.region.RegionManager;
 import fr.premier.regions.stage.StageListener;
 import fr.premier.regions.stage.StageManager;
+import fr.premier.regions.util.CommandRegistry;
 import fr.premier.regions.wand.WandListener;
 import fr.premier.regions.wand.WandManager;
 import org.bukkit.event.Listener;
@@ -42,10 +43,12 @@ public class RegionsPlugin extends JavaPlugin {
         this.stageManager = new StageManager();
 
         List.of(new RegionListener(), new PlayerDataListener(this), new WandListener(this), new StageListener(this)).forEach(this::registerEvent);
+        CommandRegistry.register(this, new RegionsCommand(this));
     }
 
     @Override
     public void onDisable() {
+        CommandRegistry.unregister(this);
         this.playerDataManager.disable();
         this.database.disable();
     }
