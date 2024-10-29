@@ -66,17 +66,12 @@ public final class Region {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
         var that = (Region) obj;
-        return Objects.equals(this.uuid, that.uuid) &&
-                Objects.equals(this.name, that.name) &&
-                Objects.equals(this.firstLocation, that.firstLocation) &&
-                Objects.equals(this.secondLocation, that.secondLocation) &&
-                Objects.equals(this.binaryFlags, that.binaryFlags) &&
-                Objects.equals(this.chunks, that.chunks);
+        return Objects.equals(this.uuid, that.uuid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid, name, firstLocation, secondLocation, binaryFlags, chunks);
+        return Objects.hash(uuid);
     }
 
     @Override

@@ -1,19 +1,22 @@
 package fr.premier.regions.data;
 
 import fr.premier.regions.RegionsPlugin;
-import fr.premier.regions.binary.impl.BinaryWhitelist;
 import fr.premier.regions.region.Region;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class PlayerData {
 
     private final UUID uuid;
-    private final BinaryWhitelist whitelistedRegions;
+    private final Set<Region> whitelistedRegions;
+    private final Set<Region> copyRegions = new HashSet<>();
     private Region currentRegion;
     private boolean waitingSave;
 
-    public PlayerData(UUID uuid, BinaryWhitelist whitelistedRegions) {
+    public PlayerData(UUID uuid, Set<Region> whitelistedRegions) {
         this.uuid = uuid;
         this.whitelistedRegions = whitelistedRegions;
     }
@@ -22,7 +25,11 @@ public class PlayerData {
         return uuid;
     }
 
-    public BinaryWhitelist getBinaryWhitelistedRegions() {
+    public Set<Region> getCopyRegions() {
+        return copyRegions;
+    }
+
+    public Set<Region> getWhitelistedRegions() {
         return whitelistedRegions;
     }
 
@@ -34,10 +41,14 @@ public class PlayerData {
         this.currentRegion = currentRegion;
     }
 
-    public void save() {
-        if (this.waitingSave) return;
-        this.waitingSave = true;
-        RegionsPlugin.getInstance().getPlayerDataManager().getSaveQueue().add(this);
+    public void editWhitelist(Consumer<Set<Region>> consumer) {
+        if (!this.waitingSave) {
+            this.waitingSave = true;
+            this.copyRegions.clear();
+            this.copyRegions.addAll(this.whitelistedRegions);
+            RegionsPlugin.getInstance().getPlayerDataManager().getSaveQueue().add(this);
+        }
+        consumer.accept(this.whitelistedRegions);
     }
 
     public void setWaitingSave(boolean waitingSave) {

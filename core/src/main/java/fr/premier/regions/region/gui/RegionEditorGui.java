@@ -65,14 +65,13 @@ public class RegionEditorGui extends ChestGui {
         event.getWhoClicked().closeInventory();
         this.plugin.getStageManager().createChatMessageStage(event, (player, message) -> OfflinePlayerUtil.getOfflinePlayerByName(message, false, offlinePlayer -> {
             final PlayerData playerData = this.plugin.getPlayerDataManager().getDirectPlayerData(offlinePlayer.getUniqueId());
-            if (playerData.getBinaryWhitelistedRegions().getValue().contains(this.region)) {
+            if (playerData.getWhitelistedRegions().contains(this.region)) {
                 player.sendMessage(Component.text("This player is already whitelisted to this region.").color(NamedTextColor.RED));
                 return;
             }
 
-            playerData.getBinaryWhitelistedRegions().getUpdateValue(regions -> {
+            playerData.editWhitelist(regions -> {
                 regions.add(this.region);
-                playerData.save();
                 player.sendMessage(Component.text("You whitelisted " + offlinePlayer.getName() + " to this region.").color(NamedTextColor.GREEN));
             });
         }, () -> player.sendMessage(Component.text("This player never connected to server").color(NamedTextColor.RED))));
@@ -82,14 +81,13 @@ public class RegionEditorGui extends ChestGui {
         event.getWhoClicked().closeInventory();
         this.plugin.getStageManager().createChatMessageStage(event, (player, message) -> OfflinePlayerUtil.getOfflinePlayerByName(message, false, offlinePlayer -> {
             final PlayerData playerData = this.plugin.getPlayerDataManager().getDirectPlayerData(offlinePlayer.getUniqueId());
-            if (!playerData.getBinaryWhitelistedRegions().getValue().contains(this.region)) {
+            if (!playerData.getWhitelistedRegions().contains(this.region)) {
                 player.sendMessage(Component.text("This player is not whitelisted to this region.").color(NamedTextColor.RED));
                 return;
             }
 
-            playerData.getBinaryWhitelistedRegions().getUpdateValue(regions -> {
+            playerData.editWhitelist(regions -> {
                 regions.remove(this.region);
-                playerData.save();
                 player.sendMessage(Component.text("You un-whitelisted " + offlinePlayer.getName() + " to this region.").color(NamedTextColor.RED));
             });
         }, () -> player.sendMessage(Component.text("This player never connected to server").color(NamedTextColor.RED))));

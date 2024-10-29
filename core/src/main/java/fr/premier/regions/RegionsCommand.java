@@ -1,7 +1,10 @@
 package fr.premier.regions;
 
+import fr.premier.regions.api.flag.FlagState;
 import fr.premier.regions.data.PlayerData;
+import fr.premier.regions.flag.Flag;
 import fr.premier.regions.region.Region;
+import fr.premier.regions.region.gui.RegionEditorGui;
 import fr.premier.regions.region.gui.RegionPagesGUI;
 import fr.premier.regions.util.OfflinePlayerUtil;
 import org.bukkit.command.Command;
@@ -28,6 +31,13 @@ public class RegionsCommand extends Command {
             }
 
             final String argument = args[0].toLowerCase();
+
+            final Region guiRegion = this.plugin.getRegionManager().getRegion(player.getWorld(), argument);
+
+            if (guiRegion != null) {
+                new RegionEditorGui(guiRegion, this.plugin).show(player);
+                return false;
+            }
 
             if (argument.equals("wand")) {
                 this.plugin.getWandManager().giveWand(player);
@@ -76,14 +86,14 @@ public class RegionsCommand extends Command {
 
                     OfflinePlayerUtil.getOfflinePlayerByName(args[2], false, offlinePlayer -> {
                         final PlayerData playerData = this.plugin.getPlayerDataManager().getDirectPlayerData(offlinePlayer.getUniqueId());
-                        boolean contains = playerData.getBinaryWhitelistedRegions().getValue().contains(region);
+                        boolean contains = playerData.getWhitelistedRegions().contains(region);
                         final boolean add = argument.equals("add");
                         if (contains == add) {
                             sender.sendMessage(add ? "§cThis player already whitelsted to this region" : "§cThis player is not whitelisted to this region");
                             return;
                         }
 
-                        playerData.getBinaryWhitelistedRegions().getUpdateValue(regions -> {
+                        playerData.editWhitelist(regions -> {
                             if (add) {
                                 regions.add(region);
                                 sender.sendMessage("§aYou added " + offlinePlayer.getName() + " from the region " + region.getName());
@@ -91,11 +101,37 @@ public class RegionsCommand extends Command {
                                 regions.remove(region);
                                 sender.sendMessage("§aYou removed " + offlinePlayer.getName() + " from the region " + region.getName());
                             }
-
-                            playerData.save();
                         });
                     }, () -> sender.sendMessage("§cThis player never connected the server."));
                 }
+                case "flag": {
+                    if (args.length < 4) {
+                        sendHelp(sender);
+                        return false;
+                    }
+
+                    final Flag flag = this.plugin.getFlagManager().getDefaultFlag(args[2]);
+                    if (flag == null) {
+                        sender.sendMessage("§cThis flag doesn't exists.");
+                        return false;
+                    }
+
+                    final FlagState state;
+                    try {
+                        state = FlagState.valueOf(args[3].toUpperCase());
+                    } catch (Exception exception) {
+                        sender.sendMessage("§cIncorrect flag state.");
+                        return false;
+                    }
+
+                    this.plugin.getRegionManager().setFlagState(region, flag, state);
+                    sender.sendMessage("§aUpdate flag " + flag.getDisplayName() + " of region " + region.getName() + " to " + state.name());
+                }
+                break;
+                case "whitelist": {
+
+                }
+                break;
             }
         }
         return false;

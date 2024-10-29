@@ -67,7 +67,7 @@ public class RegionManager {
         return shouldCancel(flag, location, (region, state) -> {
             if (state == FlagState.NONE) return true;
             if (state == FlagState.EVERYONE) return false;
-            if (state == FlagState.WHITELIST) return !playerData.getBinaryWhitelistedRegions().getValue().contains(region);
+            if (state == FlagState.WHITELIST) return !playerData.getWhitelistedRegions().contains(region);
             return false;
         });
     }

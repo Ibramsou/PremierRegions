@@ -2,7 +2,6 @@ package fr.premier.regions.database;
 
 import fr.premier.regions.RegionsPlugin;
 import fr.premier.regions.binary.impl.BinaryFlags;
-import fr.premier.regions.binary.impl.BinaryWhitelist;
 import fr.premier.regions.data.PlayerData;
 import fr.premier.regions.region.Region;
 import fr.premier.regions.sql.SqlDatabase;
@@ -11,9 +10,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Queue;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RegionsDatabase extends SqlDatabase {
 
@@ -28,12 +26,12 @@ public class RegionsDatabase extends SqlDatabase {
             "max_y INTEGER NOT NULL, " +
             "max_z INTEGER NOT NULL, " +
             "flags varbinary(10000))";
-    private static final String CREATE_PLAYERS_TABLE_STATEMENT = "CREATE TABLE IF NOT EXISTS players (" +
-            "uuid VARCHAR(36) NOT NULL UNIQUE PRIMARY KEY, " +
-            "whitelisted_regions varbinary(10000))";
-    private static final String LOAD_USER_STATEMENT = "SELECT * FROM players WHERE uuid = ?";
-    private static final String SAVE_USER_STATEMENT = "INSERT INTO players (uuid, whitelisted_regions) VALUES (?, ?) " +
-            "ON DUPLICATE KEY UPDATE whitelisted_regions = VALUES(whitelisted_regions)";
+    private static final String CREATE_WHITELIST_TABLE_STATEMENT = "CREATE TABLE IF NOT EXISTS whitelist (" +
+            "uuid VARCHAR(36) NOT NULL, " +
+            "hashcode INTEGER NOT NULL)";
+    private static final String LOAD_WHITELIST_STATEMENT = "SELECT * FROM whitelist WHERE uuid = ?";
+    private static final String WHITELIST_STATEMENT = "INSERT INTO whitelist (uuid, hashcode) VALUES (?, ?)";
+    private static final String UN_WHITELIST_STATEMENT = "DELETE FROM whitelist WHERE uuid = ? AND hashcode = ?";
     private static final String LOAD_REGIONS_STATEMENT = "SELECT * FROM regions";
     private static final String INSERT_REGION_STATEMENT = "INSERT INTO regions (uuid, name, world, min_x, min_y, min_z, max_x, max_y, max_z, flags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String DELETE_REGION_STATEMENT = "DELETE FROM regions WHERE uuid = ?";
@@ -48,17 +46,17 @@ public class RegionsDatabase extends SqlDatabase {
         this.plugin = plugin;
         this.loadTables();
         this.loadRegions();
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::saveUsers, 20L * 60L, 20L * 60L);
+        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::saveWhitelists, 20L * 60L, 20L * 60L);
     }
 
     public void disable() {
-        this.saveUsers();
+        this.saveWhitelists();
     }
 
     private void loadTables() {
         this.createClosingStatement(statement -> {
             statement.executeUpdate(CREATE_REGIONS_TABLE_STATEMENT);
-            statement.executeUpdate(CREATE_PLAYERS_TABLE_STATEMENT);
+            statement.executeUpdate(CREATE_WHITELIST_TABLE_STATEMENT);
         });
     }
 
@@ -113,34 +111,71 @@ public class RegionsDatabase extends SqlDatabase {
     }
 
     public PlayerData loadUser(UUID uuid) {
-        return this.resultPreparedStatement(LOAD_USER_STATEMENT, statement -> {
+        return this.resultPreparedStatement(LOAD_WHITELIST_STATEMENT, statement -> {
             statement.setString(1, uuid.toString());
-            final PlayerData playerData = new PlayerData(uuid, new BinaryWhitelist());
+            final PlayerData playerData = new PlayerData(uuid, ConcurrentHashMap.newKeySet());
             try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    byte[] whitelisted_regions = resultSet.getBytes("whitelisted_regions");
-                    playerData.getBinaryWhitelistedRegions().loadValue(whitelisted_regions);
+                Set<Region> regions = new HashSet<>();
+                while (resultSet.next()) {
+                    int hashcode = resultSet.getInt("hashcode");
+                    Region region = this.plugin.getRegionManager().getRegion(hashcode);
+                    if (region == null) continue;
+                    regions.add(region);
                 }
+                if (!regions.isEmpty()) playerData.getWhitelistedRegions().addAll(regions);
             }
 
             return playerData;
         });
     }
 
-    public void saveUsers() {
+    public void saveWhitelists() {
         final Queue<PlayerData> queue = this.plugin.getPlayerDataManager().getSaveQueue();
         if (queue.isEmpty()) return;
-        this.prepareClosingStatement(SAVE_USER_STATEMENT, statement -> {
-            PlayerData playerData;
-            while ((playerData = queue.poll()) != null) {
-                playerData.setWaitingSave(false);
-                statement.setString(1, playerData.getUuid().toString());
-                statement.setBytes(2, playerData.getBinaryWhitelistedRegions().asBinary());
-                statement.addBatch();
+        final Queue<WhitelistElement> whitelistQueue = new LinkedList<>();
+        final Queue<WhitelistElement> unWhitelistQueue = new LinkedList<>();
+        PlayerData playerData;
+        while ((playerData = queue.poll()) != null) {
+            playerData.setWaitingSave(false);
+            for (Region unWhitelistedRegion : playerData.getWhitelistedRegions()) {
+                if (!playerData.getCopyRegions().contains(unWhitelistedRegion)) {
+                    whitelistQueue.add(new WhitelistElement(playerData.getUuid(), this.plugin.getRegionManager().hashRegion(unWhitelistedRegion)));
+                }
+            }
+            for (Region whitelistedRegion : playerData.getCopyRegions()) {
+                if (!playerData.getWhitelistedRegions().contains(whitelistedRegion)) {
+                    unWhitelistQueue.add(new WhitelistElement(playerData.getUuid(), this.plugin.getRegionManager().hashRegion(whitelistedRegion)));
+                }
             }
 
-            statement.executeBatch();
-        });
+
+        }
+
+        if (!whitelistQueue.isEmpty()) {
+            this.prepareClosingStatement(WHITELIST_STATEMENT, statement -> {
+                WhitelistElement whitelistElement;
+                while ((whitelistElement = whitelistQueue.poll()) != null) {
+                    statement.setString(1, whitelistElement.uuid.toString());
+                    statement.setInt(2, whitelistElement.hashcode);
+                    statement.addBatch();
+                }
+
+                statement.executeBatch();
+            });
+        }
+
+        if (!unWhitelistQueue.isEmpty()) {
+            this.prepareClosingStatement(UN_WHITELIST_STATEMENT, statement -> {
+                WhitelistElement whitelistElement;
+                while ((whitelistElement = unWhitelistQueue.poll()) != null) {
+                    statement.setString(1, whitelistElement.uuid.toString());
+                    statement.setInt(2, whitelistElement.hashcode);
+                    statement.addBatch();
+                }
+
+                statement.executeBatch();
+            });
+        }
     }
 
     public void updateRegionName(Region region) {
@@ -173,4 +208,6 @@ public class RegionsDatabase extends SqlDatabase {
             statement.executeUpdate();
         });
     }
+
+    private record WhitelistElement(UUID uuid, int hashcode) {}
 }
