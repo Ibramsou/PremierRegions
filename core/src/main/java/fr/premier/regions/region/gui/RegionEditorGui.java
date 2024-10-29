@@ -46,9 +46,11 @@ public class RegionEditorGui extends ChestGui {
         pane.addItem(editFlags, Slot.fromIndex(4));
 
         this.addPane(pane);
+        this.setOnGlobalClick(event -> event.setCancelled(true));
     }
 
     private void onRename(InventoryClickEvent event) {
+        event.getWhoClicked().closeInventory();
         this.plugin.getStageManager().createChatMessageStage(event, (player, message) -> {
             if (this.plugin.getRegionManager().getRegion(this.region.getFirstLocation().getWorld(), message) != null) {
                 player.sendMessage(Component.text("A region with that name already exists in this world").color(NamedTextColor.RED));
@@ -60,6 +62,7 @@ public class RegionEditorGui extends ChestGui {
     }
 
     private void onWhitelistAdd(InventoryClickEvent event) {
+        event.getWhoClicked().closeInventory();
         this.plugin.getStageManager().createChatMessageStage(event, (player, message) -> OfflinePlayerUtil.getOfflinePlayerByName(message, false, offlinePlayer -> {
             final PlayerData playerData = this.plugin.getPlayerDataManager().getDirectPlayerData(offlinePlayer.getUniqueId());
             if (playerData.getBinaryWhitelistedRegions().getValue().contains(this.region)) {
@@ -76,6 +79,7 @@ public class RegionEditorGui extends ChestGui {
     }
 
     private void onWhitelistRemove(InventoryClickEvent event) {
+        event.getWhoClicked().closeInventory();
         this.plugin.getStageManager().createChatMessageStage(event, (player, message) -> OfflinePlayerUtil.getOfflinePlayerByName(message, false, offlinePlayer -> {
             final PlayerData playerData = this.plugin.getPlayerDataManager().getDirectPlayerData(offlinePlayer.getUniqueId());
             if (!playerData.getBinaryWhitelistedRegions().getValue().contains(this.region)) {

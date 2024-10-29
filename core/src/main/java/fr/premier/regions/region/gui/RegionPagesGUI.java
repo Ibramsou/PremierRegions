@@ -28,6 +28,7 @@ public class RegionPagesGUI extends ChestGui {
         final PaginatedPane pane = new PaginatedPane(0, 0, 6, 9);
         pane.populateWithGuiItems(items);
         this.addPane(pane);
+        this.setOnGlobalClick(event -> event.setCancelled(true));
     }
 
     private void onRegionClick(Region region, InventoryClickEvent event) {

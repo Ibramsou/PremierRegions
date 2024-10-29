@@ -36,6 +36,7 @@ public class RegionFlagsGUI extends ChestGui {
         });
         pane.populateWithGuiItems(items);
         this.addPane(pane);
+        this.setOnGlobalClick(event -> event.setCancelled(true));
     }
 
     public void onFlagClick(Flag flag) {
