@@ -61,7 +61,14 @@ public class RegionEditorGui extends ChestGui {
     }
 
     private void onWhitelistAdd(InventoryClickEvent event) {
+        this.plugin.getStageManager().addStage((Player) event.getWhoClicked(), (ChatStage) (chatEvent, message) -> {
+            if (message.split(" ", 2).length > 1) {
+                chatEvent.getPlayer().sendMessage(Component.text("Please type a correct name").color(NamedTextColor.RED));
+                return StageResult.CANCELLED;
+            }
 
+
+        });
     }
 
     private void onWhitelistRemove(InventoryClickEvent event) {
