@@ -19,8 +19,9 @@ import java.util.function.BiPredicate;
 public class RegionManager {
 
     private final RegionsPlugin plugin;
+    private final Map<UUID, Region> byIdRegions = new HashMap<>();
     private final Map<Integer, Region> regions = new HashMap<>();
-    private final Map<Chunk, List<Region>> chunkRegions = new HashMap<>();
+    private final Map<Chunk, Set<Region>> chunkRegions = new HashMap<>();
 
     public RegionManager(RegionsPlugin plugin) {
         this.plugin = plugin;
@@ -47,7 +48,7 @@ public class RegionManager {
 
     private Boolean shouldCancel(Flag flag, Location location, BiPredicate<Region, FlagState> predicate) {
         Chunk chunk = location.getChunk();
-        List<Region> regions = chunkRegions.get(chunk);
+        Set<Region> regions = chunkRegions.get(chunk);
         if (regions == null) return null;
         return regions.stream().filter(region -> {
             final Location first = region.getFirstLocation();
@@ -109,6 +110,10 @@ public class RegionManager {
         return regions.get(hashcode);
     }
 
+    public Region getRegion(UUID uuid) {
+        return byIdRegions.get(uuid);
+    }
+
     public boolean containsRegion(final World world, final String regionName) {
         return regions.containsKey(hashRegion(world, regionName));
     }
@@ -119,7 +124,7 @@ public class RegionManager {
         Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
             this.plugin.getDatabase().insertRegion(region);
             Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> {
-                this.loadRegion(region);
+                this.loadRegionNameAndPosition(region);
                 future.complete(region);
             });
         });
@@ -131,13 +136,34 @@ public class RegionManager {
         Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
             this.plugin.getDatabase().deleteRegion(region);
             Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-                this.regions.remove(hashRegion(region));
+                this.unloadRegionPositions(region);
+                this.unloadRegionName(region);
+                this.byIdRegions.remove(region.getUUID());
                 removed.run();
             });
         });
     }
 
-    public void loadRegion(Region region) {
+    public void unloadRegionName(Region region) {
+        this.regions.remove(hashRegion(region));
+    }
+
+    public void unloadRegionPositions(Region region) {
+        region.getChunks().forEach(chunk -> {
+            final Set<Region> regions = this.chunkRegions.get(chunk);
+            if (regions == null) return;
+            regions.remove(region);
+            if (regions.isEmpty()) this.chunkRegions.remove(chunk);
+        });
+        region.getChunks().clear();
+    }
+
+    public void loadRegionName(Region region) {
+        this.regions.put(hashRegion(region), region);
+        this.byIdRegions.put(region.getUUID(), region);
+    }
+
+    public void loadRegionPositions(Region region) {
         final Location first = region.getFirstLocation();
         final Location second = region.getSecondLocation();
         final World world = first.getWorld();
@@ -149,11 +175,14 @@ public class RegionManager {
             for (int z = minZ; z <= maxZ; z++) {
                 Chunk chunk = world.getChunkAt(x, z, false);
                 region.getChunks().add(chunk);
-                this.chunkRegions.computeIfAbsent(chunk, chunk1 -> new ArrayList<>()).add(region);
+                this.chunkRegions.computeIfAbsent(chunk, chunk1 -> new HashSet<>()).add(region);
             }
         }
+    }
 
-        this.regions.put(hashRegion(region), region);
+    public void loadRegionNameAndPosition(Region region) {
+        this.loadRegionName(region);
+        this.loadRegionPositions(region);
     }
 
     public Map<Integer, Region> getRegions() {

@@ -29,17 +29,18 @@ public class RegionsDatabase extends SqlDatabase {
             "flags varbinary(10000))";
     private static final String CREATE_WHITELIST_TABLE_STATEMENT = "CREATE TABLE IF NOT EXISTS whitelist (" +
             "uuid VARCHAR(36) NOT NULL, " +
-            "hashcode INTEGER NOT NULL)";
+            "region VARCHAR(36) NOT NULL)";
     private static final String LOAD_WHITELIST_STATEMENT = "SELECT * FROM whitelist WHERE uuid = ?";
-    private static final String WHITELIST_STATEMENT = "INSERT INTO whitelist (uuid, hashcode) VALUES (?, ?)";
-    private static final String UN_WHITELIST_STATEMENT = "DELETE FROM whitelist WHERE uuid = ? AND hashcode = ?";
+    private static final String WHITELIST_STATEMENT = "INSERT INTO whitelist (uuid, region) VALUES (?, ?)";
+    private static final String UN_WHITELIST_STATEMENT = "DELETE FROM whitelist WHERE uuid = ? AND region = ?";
     private static final String LOAD_REGIONS_STATEMENT = "SELECT * FROM regions";
     private static final String INSERT_REGION_STATEMENT = "INSERT INTO regions (uuid, name, world, min_x, min_y, min_z, max_x, max_y, max_z, flags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String DELETE_REGION_STATEMENT = "DELETE FROM regions WHERE uuid = ?";
     private static final String UPDATE_REGION_FLAGS_STATEMENT = "UPDATE regions SET flags = ? WHERE uuid = ?";
     private static final String UPDATE_REGION_POSITIONS_STATEMENT = "UPDATE regions SET min_x = ?, min_y = ?, min_z, max_x = ?, max_y = ?, max_z = ? WHERE uuid = ?";
     private static final String UPDATE_REGION_NAME_STATEMENT = "UPDATE regions SET name = ? WHERE uuid = ?";
-    private static final String LIST_WHITELIST_STATEMENT = "SELECT * FROM whitelist WHERE hashcode = ?";
+    private static final String LIST_WHITELIST_STATEMENT = "SELECT * FROM whitelist WHERE region = ?";
+    private static final String CLEAR_WHITELISTED_REGION_STATEMENT = "DELETE FROM whitelist where region = ?";
 
     private final RegionsPlugin plugin;
 
@@ -83,7 +84,7 @@ public class RegionsDatabase extends SqlDatabase {
                     final BinaryFlags binaryFlags = new BinaryFlags();
                     binaryFlags.loadValue(flagsBinary);
                     final Region region = new Region(uuid, name, min, max, binaryFlags, new ArrayList<>());
-                    this.plugin.getRegionManager().loadRegion(region);
+                    this.plugin.getRegionManager().loadRegionNameAndPosition(region);
                 }
             }
         });
@@ -110,6 +111,10 @@ public class RegionsDatabase extends SqlDatabase {
             statement.setString(1, region.getUUID().toString());
             statement.executeUpdate();
         });
+        this.prepareClosingStatement(CLEAR_WHITELISTED_REGION_STATEMENT, statement -> {
+            statement.setString(1, region.getUUID().toString());
+            statement.executeUpdate();
+        });
     }
 
     public PlayerData loadUser(UUID uuid) {
@@ -119,8 +124,8 @@ public class RegionsDatabase extends SqlDatabase {
             try (ResultSet resultSet = statement.executeQuery()) {
                 Set<Region> regions = new HashSet<>();
                 while (resultSet.next()) {
-                    int hashcode = resultSet.getInt("hashcode");
-                    Region region = this.plugin.getRegionManager().getRegion(hashcode);
+                    final UUID regionUUID = UUID.fromString(resultSet.getString("region"));
+                    final Region region = this.plugin.getRegionManager().getRegion(regionUUID);
                     if (region == null) continue;
                     regions.add(region);
                 }
@@ -141,12 +146,12 @@ public class RegionsDatabase extends SqlDatabase {
             playerData.setWaitingSave(false);
             for (Region unWhitelistedRegion : playerData.getWhitelistedRegions()) {
                 if (!playerData.getCopyRegions().contains(unWhitelistedRegion)) {
-                    whitelistQueue.add(new WhitelistElement(playerData.getUuid(), this.plugin.getRegionManager().hashRegion(unWhitelistedRegion)));
+                    whitelistQueue.add(new WhitelistElement(playerData.getUuid(), unWhitelistedRegion.getUUID()));
                 }
             }
             for (Region whitelistedRegion : playerData.getCopyRegions()) {
                 if (!playerData.getWhitelistedRegions().contains(whitelistedRegion)) {
-                    unWhitelistQueue.add(new WhitelistElement(playerData.getUuid(), this.plugin.getRegionManager().hashRegion(whitelistedRegion)));
+                    unWhitelistQueue.add(new WhitelistElement(playerData.getUuid(), whitelistedRegion.getUUID()));
                 }
             }
         }
@@ -156,7 +161,7 @@ public class RegionsDatabase extends SqlDatabase {
                 WhitelistElement whitelistElement;
                 while ((whitelistElement = whitelistQueue.poll()) != null) {
                     statement.setString(1, whitelistElement.uuid.toString());
-                    statement.setInt(2, whitelistElement.hashcode);
+                    statement.setString(2, whitelistElement.regionUUID.toString());
                     statement.addBatch();
                 }
 
@@ -169,7 +174,7 @@ public class RegionsDatabase extends SqlDatabase {
                 WhitelistElement whitelistElement;
                 while ((whitelistElement = unWhitelistQueue.poll()) != null) {
                     statement.setString(1, whitelistElement.uuid.toString());
-                    statement.setInt(2, whitelistElement.hashcode);
+                    statement.setString(2, whitelistElement.regionUUID.toString());
                     statement.addBatch();
                 }
 
@@ -226,5 +231,5 @@ public class RegionsDatabase extends SqlDatabase {
         });
     }
 
-    private record WhitelistElement(UUID uuid, int hashcode) {}
+    private record WhitelistElement(UUID uuid, UUID regionUUID) {}
 }

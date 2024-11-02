@@ -56,7 +56,10 @@ public class RegionEditorGui extends ChestGui {
                 player.sendMessage(Component.text("A region with that name already exists in this world").color(NamedTextColor.RED));
                 return;
             }
+            this.plugin.getRegionManager().unloadRegionName(region);
             this.region.setName(message);
+            this.plugin.getRegionManager().loadRegionName(region);
+            player.sendMessage(Component.text("Renamed region to " + region.getName()).color(NamedTextColor.GREEN));
             Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> this.plugin.getDatabase().updateRegionName(region));
         });
     }
@@ -97,10 +100,10 @@ public class RegionEditorGui extends ChestGui {
         this.plugin.getWandManager().getRemoveSelection((Player) event.getWhoClicked(), wandSelection -> {
             this.region.setFirstLocation(wandSelection.getFirst());
             this.region.setSecondLocation(wandSelection.getSecond());
+            this.plugin.getRegionManager().unloadRegionPositions(region);
+            this.plugin.getRegionManager().loadRegionPositions(region);
             Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> this.plugin.getDatabase().updateRegionPositions(region));
-        }, () -> {
-            event.getWhoClicked().sendMessage("§cPlease select a region first with /wand");
-        });
+        }, () -> event.getWhoClicked().sendMessage("§cPlease select a region first with /wand"));
     }
 
     private void onOpenFlagEditor(InventoryClickEvent event) {
