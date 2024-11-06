@@ -15,6 +15,7 @@ public class FlagManager {
         register("block_break", "Block Break", FlagState.WHITELIST);
         register("block_place", "Block Place", FlagState.WHITELIST);
         register("interact", "Interact", FlagState.WHITELIST);
+        register("entity_damage", "Entity Damage", FlagState.WHITELIST);
     }
 
     public Flag register(Plugin plugin, String name, String displayName, FlagState defaultState) {

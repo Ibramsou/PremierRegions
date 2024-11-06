@@ -102,6 +102,7 @@ public class RegionEditorGui extends ChestGui {
             this.region.setSecondLocation(wandSelection.getSecond());
             this.plugin.getRegionManager().unloadRegionPositions(region);
             this.plugin.getRegionManager().loadRegionPositions(region);
+            event.getWhoClicked().sendMessage("§aSuccessfully redefined location.");
             Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> this.plugin.getDatabase().updateRegionPositions(region));
         }, () -> event.getWhoClicked().sendMessage("§cPlease select a region first with /wand"));
     }

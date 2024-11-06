@@ -37,7 +37,7 @@ public class RegionsDatabase extends SqlDatabase {
     private static final String INSERT_REGION_STATEMENT = "INSERT INTO regions (uuid, name, world, min_x, min_y, min_z, max_x, max_y, max_z, flags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String DELETE_REGION_STATEMENT = "DELETE FROM regions WHERE uuid = ?";
     private static final String UPDATE_REGION_FLAGS_STATEMENT = "UPDATE regions SET flags = ? WHERE uuid = ?";
-    private static final String UPDATE_REGION_POSITIONS_STATEMENT = "UPDATE regions SET min_x = ?, min_y = ?, min_z, max_x = ?, max_y = ?, max_z = ? WHERE uuid = ?";
+    private static final String UPDATE_REGION_POSITIONS_STATEMENT = "UPDATE regions SET min_x = ?, min_y = ?, min_z = ?, max_x = ?, max_y = ?, max_z = ? WHERE uuid = ?";
     private static final String UPDATE_REGION_NAME_STATEMENT = "UPDATE regions SET name = ? WHERE uuid = ?";
     private static final String LIST_WHITELIST_STATEMENT = "SELECT * FROM whitelist WHERE region = ?";
     private static final String CLEAR_WHITELISTED_REGION_STATEMENT = "DELETE FROM whitelist where region = ?";
